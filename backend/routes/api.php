@@ -13,6 +13,8 @@ use Illuminate\Http\Request;
 |
 */
 
+Route::resource('/trip', 'TripController');
+
 Route::get('/user', function (Request $request) {
     return $request->user();
 });
