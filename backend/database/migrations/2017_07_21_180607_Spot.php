@@ -4,7 +4,7 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
 
-class Trip extends Migration
+class Spot extends Migration
 {
     /**
      * Run the migrations.
@@ -13,9 +13,14 @@ class Trip extends Migration
      */
     public function up()
     {
-        Schema::create('trip', function (Blueprint $table) {
+        Schema::create('spot', function (Blueprint $table) {
             $table->string('id', 10)->primary();
-            $table->string('name');
+            $table->string('name', 256);
+            $table->string('address', 1024)->nullable();
+            $table->string('phone_number', 16)->nullable();
+            $table->string('type', 32)->nullable();
+            $table->float('lat');
+            $table->float('lng');
             $table->timestampsTZ();
         });
     }
@@ -27,6 +32,6 @@ class Trip extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('trip');
+        Schema::dropIfExists('spot');
     }
 }

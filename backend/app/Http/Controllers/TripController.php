@@ -11,9 +11,6 @@ class TripController extends Controller
 {
     public function index()
     {
-        return Response::json([
-            'action' => 'get users',
-            'data' => Trip::all()
-        ], 200);
+        return Response::json(Trip::all(), 200);
     }
 }
