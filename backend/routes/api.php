@@ -14,7 +14,4 @@ use Illuminate\Http\Request;
 */
 
 Route::resource('/trip', 'TripController');
-
-Route::get('/spot', function (Request $request) {
-    return $request->user();
-});
+Route::resource('/spot', 'SpotController');
