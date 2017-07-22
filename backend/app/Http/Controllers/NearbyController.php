@@ -29,7 +29,7 @@ class NearbyController extends Controller {
             $limit = 500;
         }
 
-        $spots = Spot::nearby($lat, $lng, $radius);
+        $spots = Spot::nearby($lat, $lng, $radius, $limit);
         if ($request->has('type')) {
             $type = $request->input('type');
             $spots = $spots->filter(function($spot) use ($type) {
