@@ -56,10 +56,24 @@ body{
               }
             }
         }
-
-        .st2-center{
-            display: flex;
             
+        .schedule{
+            background: linear-gradient(-32deg, white, #7AFEC6, #B9B9FF);
+        
+            .st2-center{
+                display: inline-block;
+                .st2-item{
+                    border-radius: 10px;
+                    margin: 20px;
+                }
+
+            }
+
+            .bottom-nav{
+                position: absolute;
+                bottom: 0;
+                width: 100%;
+            }
         }
     }
 }

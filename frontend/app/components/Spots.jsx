@@ -1,4 +1,5 @@
 import React, {Component, PropTypes} from 'react';
+import FlatButton from 'material-ui/FlatButton';
 
 export default class Spots extends Component{
     constructor(props){
@@ -6,16 +7,12 @@ export default class Spots extends Component{
 
         this.state = {
             style: new Array(20).fill(
-                    /*position: 'absolute', 
-                    bottom: '0', 
-                    left: '50%',*/
                 {
-                    display: 'flex',
-                    width: '100px',
-                    height: '100px',
-                    backgroundColor: 'red'
+                    transition: 'all 2s',
                 })
         }
+
+        this.btns = [];
     }
 
     onClick(e, index){
@@ -29,28 +26,19 @@ export default class Spots extends Component{
             {
                 this.props.spots.map((spot, index) => {
                     return (
-                        <div key={index} 
-                            className={`st2-item`} 
+                            
+                        <FlatButton label={spot.name} 
+                            className={`st2-item st2-item-${index}`} 
                             style={this.state.style[index]}
-                            onClick={e => {this.onClick(e, index)}}>
-                            {spot.name}
-                        </div>);
+                            onClick={e => {this.onClick(e, index)}}
+                            onMouseEnter={e => this.props.onHover(index)}
+                            onMouseLeave={e => this.props.onLeave()}
+                            key={index} 
+                        />
+                        );
                 })
             }
             </div>
         );
     }
-
-    /*componentDidMount(){
-        let style = this.state.style;
-        
-        for(let i in style){
-            let left = 85 / 10 * (parseInt(i)%10);
-            console.log(left);
-            style[i].left = `${left}%`;
-            style[i].bottom = parseInt(i) > 9 ? '30%' : '15%';
-        }
-        console.log(style);
-        this.setState({style});
-    }*/
 }

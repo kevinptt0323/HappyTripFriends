@@ -45,7 +45,7 @@ export default class App extends Component{
         return (
             <div>
                 <div style={this.style}>
-                    <Route path="/map" component={props => 
+                    <Route path="/map" component={ props => 
                         <TripGoogleMap {...props} 
                             radius={this.state.radius}
                             center={this.circle.center}

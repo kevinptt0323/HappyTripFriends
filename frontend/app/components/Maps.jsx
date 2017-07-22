@@ -40,9 +40,11 @@ const _TripGoogleMap = withGoogleMap( props => (
 export default class TripGoogleMap extends Component{
     constructor(props){
         super(props);
-
+        
+        console.log(props);
         this.state = {
             start: false,
+            step: 1,
             markers: [],
             circle: {
                 center: this.props.center,
@@ -56,21 +58,6 @@ export default class TripGoogleMap extends Component{
         };
 
         this.directionIndex = 0;
-    }
-
-    componentDidMount(){
-        const DirectionsService = new google.maps.DirectionsService();
-        DirectionsService.route({
-            origin: this.state.defOrigin,
-            destination: this.state.defDestination,
-            travelMode: google.maps.TravelMode.TRANSIT,
-        }, (result, status) => {
-            if (status === google.maps.DirectionsStatus.OK) {
-                this.setState({defDirections: result});
-            } else {
-                console.error(`error fetching directions ${result}`);
-            }
-        });
     }
 
     render(){
@@ -94,15 +81,49 @@ export default class TripGoogleMap extends Component{
                     onMarkerClick={this.onMarkerClick.bind(this)}
                 />
                 <MuiThemeProvider>
-                    <Schedule 
+                    <Schedule
+                        step={this.state.step}
                         spots={this.state.markers}
                         onUpdate={this.sliderUpdate.bind(this)}
                         onDragStop={this.sliderDragStop.bind(this)}
                         onSpotClick={this.onMarkerClick.bind(this)}
+                        onSend={this.onSend.bind(this)}
+                        onHover={this.onMarkerClick.bind(this)}
+                        onLeave={this.undo.bind(this)}
+                        undo={this.undo.bind(this)}
                     />
                 </MuiThemeProvider>
             </div>
         );
+    }
+
+    componentDidMount(){
+        if(this.props.location.hash != ""){
+            let {routes} = this.state;
+            let hash = this.props.location.hash.slice(1);
+            $.getJSON('http://trip.kevinptt.com.tw/api/trip/'+hash, (r) => {
+                console.log(r); 
+                for(let route of r.data){
+                    let origin = new google.maps.LatLng(route.origin.lat, route.origin.lng);
+                    let destination = new google.maps.LatLng(route.destination.lat, route.destination.lng);
+                    
+                    const DirectionsService = new google.maps.DirectionsService();
+                    DirectionsService.route({
+                        origin, destination,
+                        travelMode: google.maps.TravelMode.TRANSIT,
+                    }, (result, status) => {
+                        if (status === google.maps.DirectionsStatus.OK) {
+                            routes.push({
+                                origin, destination, directions: result
+                            })
+                            this.setState({routes});
+                        } else {
+                            console.error(`error fetching directions ${result}`);
+                        }
+                    });
+                }
+            });
+        }
     }
     
     getSpot(position){
@@ -155,8 +176,9 @@ export default class TripGoogleMap extends Component{
                 name: r.spot.name
             });
         }
-
+        
         this.setState({markers});
+        this.setState({step: 2});
     }
 
     onMarkerClick(index){
@@ -219,4 +241,48 @@ export default class TripGoogleMap extends Component{
         this.setState({markers});
     }
 
+    _onSend(){
+        return new Promise(resolve => {
+            let data = [];
+            for(let route of this.state.routes){
+                data.push({
+                    origin: {
+                        lat: route.origin.lat(),
+                        lng: route.origin.lng()
+                    },
+                    destination: {
+                        lat: route.destination.lat(),
+                        lng: route.destination.lng()
+                    }
+                });
+            }
+            console.log(data);
+            $.ajax({
+                url: 'http://trip.kevinptt.com.tw/api/trip',
+                type: 'post',
+                dataType: 'json',
+                success: (data) => {
+                    console.log('submit', data);
+                    resolve(data);
+                    this.props.history.push(`map#${data.id}`);
+                },
+                data: { data }
+            });             
+        });
+    }
+
+    async onSend(){
+        console.log('onSend');
+        let id = await this._onSend();
+    }
+
+    undo(){
+        let {routes} = this.state;
+        
+        if(routes.length > 0){
+            routes.splice(-1, 1);
+            this.setState({routes});
+        }
+    }
+    
 }
