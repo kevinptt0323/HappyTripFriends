@@ -18,7 +18,12 @@ class SpotController extends Controller {
             $name = $request->input('name');
             $query = $query->where('name', 'LIKE',  '%' . $name . '%');
         }
-        return Response::json($query->get(), 200);
+        if ($request->has('limit')) {
+            $limit = $request->input('limit');
+        } else {
+            $limit = 100;
+        }
+        return Response::json($query->limit($limit)->get(), 200);
     }
 
     public function store(Request $request) {
