@@ -45,8 +45,8 @@ export default class Schedule extends Component{
                         display: 'flex' 
                     }}
                     min={0}
-                    max={100}
-                    step={1}
+                    max={50}
+                    step={0.5}
                     defaultValue={50}
                     onChange={this.onChangeHandler.bind(this)}
                     onDragStop={this.onDragStopHandler.bind(this)}

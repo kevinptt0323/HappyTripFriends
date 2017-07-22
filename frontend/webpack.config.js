@@ -7,7 +7,8 @@ var CSS_DIR = path.resolve(__dirname, 'css');
 
 var config = {
     entry: [
-        APP_DIR+'/index.jsx',
+        'babel-polyfill',
+        APP_DIR+'/index.jsx'
     ],
     output: {
         path: BUILD_DIR,

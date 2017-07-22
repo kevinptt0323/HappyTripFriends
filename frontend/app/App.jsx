@@ -13,12 +13,37 @@ export default class App extends Component{
         };
 
         this.state = {
-            circle: 50
+            radius: 50 * 100
         };
+        
+        this.circle = {
+            center: {lat: 25.0112183, lng: 121.52067570000001}
+ 
+        }
+
     }
 
     sliderUpdate(val){
-        this.setState({circle: val});
+        this.setState({radius: val * 100});
+    }
+
+    onCircleClick(e){
+        console.log('circle clicked: ',e);
+        
+        this.circle.center = {
+            lat: e.latLng.lat(),
+            lng: e.latLng.lng()
+        } 
+    }
+
+    onMapClick(e){
+        console.log(e.latLng.lat());
+        console.log(e.latLng.lng());
+        
+        this.circle.center = {
+            lat: e.latLng.lat(),
+            lng: e.latLng.lng()
+        } 
     }
 
     render(){
@@ -26,7 +51,12 @@ export default class App extends Component{
             <div>
                 <div style={this.style}>
                     <Route path="/map" component={props => 
-                        <TripGoogleMap {...props} circle={this.state.circle}/>} 
+                        <TripGoogleMap {...props} 
+                            radius={this.state.radius}
+                            center={this.circle.center}
+                            onMapClick={this.onMapClick.bind(this)}
+                            onCircleClick={this.onCircleClick.bind(this)}
+                        />}
                     />
                 </div>
                 <MuiThemeProvider>
