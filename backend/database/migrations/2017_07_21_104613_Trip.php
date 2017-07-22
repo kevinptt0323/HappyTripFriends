@@ -15,7 +15,8 @@ class Trip extends Migration
     {
         Schema::create('trip', function (Blueprint $table) {
             $table->string('id', 10)->primary();
-            $table->string('name');
+            $table->string('name', 256)->nullable();
+            $table->text('data')->nullable;
             $table->timestampsTZ();
         });
     }
