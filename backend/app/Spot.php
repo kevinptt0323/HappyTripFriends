@@ -69,7 +69,7 @@ class Spot extends Model
         return null;
     }
 
-    public static function loadStoreFromAPI($lat, $lng, $radius) {
+    public static function loadStoreFromAPI($lat, $lng, $radius, $limit) {
         $pointDst = WGS84toTWD97($lng, $lat);
         $client = new Client();
         $ret = json_decode($client->request('GET', self::$store_api, [
@@ -83,7 +83,12 @@ class Spot extends Model
 
         $spots = collect($ret->features)->filter(function($feature) {
             return Spot::where('name', $feature->properties->BussName)->count() == 0;
-        })->map(function($feature) {
+        });
+
+        if ($spots->count() > 0)
+            $spots = $spots->random(min($spots->count(), $limit));
+
+        $spots = $spots->map(function($feature) {
             $pointDst = TWD97toWGS84($feature->geometry->coordinates[0], $feature->geometry->coordinates[1]);
             $spot = new Spot;
             $spot->name = $feature->properties->BussName;
@@ -102,7 +107,7 @@ class Spot extends Model
         return $spots;
     }
 
-    public static function loadLandmarkFromAPI($lat, $lng, $radius) {
+    public static function loadLandmarkFromAPI($lat, $lng, $radius, $limit) {
         $pointDst = WGS84toTWD97($lng, $lat);
         $client = new Client();
         $ret = json_decode($client->request('GET', self::$landmark_api, [
@@ -116,7 +121,12 @@ class Spot extends Model
 
         $spots = collect($ret->features)->filter(function($feature) {
             return Spot::where('name', $feature->properties->LandMark)->count() == 0;
-        })->map(function($feature) {
+        });
+
+        if ($spots->count() > 0)
+            $spots = $spots->random(min($spots->count(), $limit));
+
+        $spots = $spots->map(function($feature) {
             $pointDst = TWD97toWGS84($feature->geometry->coordinates[0], $feature->geometry->coordinates[1]);
             $spot = new Spot;
             $spot->name = $feature->properties->LandMark;
@@ -133,18 +143,18 @@ class Spot extends Model
         return $spots;
     }
 
-    public static function nearby($lat, $lng, $radius) {
+    public static function nearby($lat, $lng, $radius, $limit) {
         $lat_sin = sin(deg2rad($lat));
         $lat_cos = cos(deg2rad($lat));
         $dist = $radius / (60 * 1.1515 * 1.609344 * 1000);
-        $spots = self::whereRaw('DEGREES(ACOS(SIN(RADIANS(lat)) * ? + COS(RADIANS(lat)) * ? * COS(RADIANS(lng - ?)))) <= ?', [$lat_sin, $lat_cos, $lng, $dist])->get();
+        $spots = self::whereRaw('DEGREES(ACOS(SIN(RADIANS(lat)) * ? + COS(RADIANS(lat)) * ? * COS(RADIANS(lng - ?)))) <= ?', [$lat_sin, $lat_cos, $lng, $dist])->limit($limit)->get();
         $spots = collect($spots);
 
-        $spots = $spots->merge(self::loadLandmarkFromAPI($lat, $lng, $radius));
-        $stores = self::loadStoreFromAPI($lat, $lng, $radius);
-        if ($stores->count())
-            $stores = $stores->random(min($stores->count(), ceil($spots->count()*0.5)));
-        $spots = $spots->merge($stores);
+        $spots = $spots->merge(self::loadLandmarkFromAPI($lat, $lng, $radius, $limit));
+        //$stores = self::loadStoreFromAPI($lat, $lng, $radius, $limit);
+        //if ($stores->count())
+        //    $stores = $stores->random(min($stores->count(), ceil($spots->count()*0.5)));
+        //$spots = $spots->merge($stores);
 
         $spots = $spots->map(function($spot) use ($lat, $lng) {
             return ['spot' => $spot, 'distance' => distance($lat, $lng, $spot->lat, $spot->lng)];
