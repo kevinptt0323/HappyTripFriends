@@ -19,8 +19,8 @@ class Spot extends Migration
             $table->string('address', 1024)->nullable();
             $table->string('phone_number', 16)->nullable();
             $table->string('type', 32)->nullable();
-            $table->float('lat', 10, 8);
-            $table->float('lng', 11, 8);
+            $table->float('lat', 8, 6)->nullable();
+            $table->float('lng', 9, 6)->nullable();
             $table->timestampsTZ();
         });
     }

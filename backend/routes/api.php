@@ -15,3 +15,4 @@ use Illuminate\Http\Request;
 
 Route::resource('/trip', 'TripController');
 Route::resource('/spot', 'SpotController');
+Route::get('/nearby', 'NearbyController@index');
