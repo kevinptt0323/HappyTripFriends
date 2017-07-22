@@ -1,5 +1,5 @@
 %full-fill {
-    position: relative;
+    position: absolute;
     top: 0;
     bottom: 0;
     left: 0;
@@ -9,10 +9,57 @@
 body{
     #container{
         
-        .branch{
+        .st1-text{
+            $anime-time: 8s;
 
+            $box-size-w: 200px;
+            $box-size-h: 200px;
+            $clip-distance: .05;
+            $clip-size-w: $box-size-w * (1 + $clip-distance * 2);
+            $clip-size-h: $box-size-h * (1 + $clip-distance * 2);
+            $path-width: 2px;
+            $main-color: #69ca62;
+            
+            @extend %full-fill;
+            top: 75%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: $box-size-w;
+            height: $box-size-h;
+            //box-shadow: inset 0 0 0 1px rgba($main-color, .5);
+
+            &::before,
+            &::after{
+                @extend %full-fill;
+                content: '';
+                z-index: -1;
+                margin: -1 * $clip-distance * 100%;
+                box-shadow: inset 0 0 0 $path-width; 
+                animation: clipMe $anime-time linear infinite;    
+            }
+            
+            &::before{
+                animation-delay: $anime-time * -0.5;
+            }
+
+            @keyframes clipMe {
+                0%, 100% {clip: rect(0px, $clip-size-h, $path-width, 0px); }
+                25% {clip: rect(0px, $path-width, $clip-size-w, 0px); }
+                50% {clip: rect($clip-size-h - $path-width, $clip-size-w, $clip-size-h, 0px); }
+                75% {clip: rect(0px, $clip-size-w, $clip-size-h, $clip-size-w - $path-width); }
+            }
+
+            &:hover {
+                &::after,
+                &::before {
+                  background-color: rgba(#f00, .3);
+              }
+            }
         }
 
-        
+        .st2-center{
+            display: flex;
+            
+        }
     }
 }

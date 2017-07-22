@@ -53,7 +53,10 @@ export default class Schedule extends Component{
                     onChange={this.onChangeHandler.bind(this)}
                     onDragStop={this.onDragStopHandler.bind(this)}
                 />
-                <Spots spots={this.props.spots} />
+                <Spots 
+                    spots={this.props.spots} 
+                    onSpotClick={this.props.onSpotClick}
+                />
             </div>
         );
     }

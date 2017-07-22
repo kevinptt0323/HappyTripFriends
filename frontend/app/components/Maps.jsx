@@ -98,6 +98,7 @@ export default class TripGoogleMap extends Component{
                         spots={this.state.markers}
                         onUpdate={this.sliderUpdate.bind(this)}
                         onDragStop={this.sliderDragStop.bind(this)}
+                        onSpotClick={this.onMarkerClick.bind(this)}
                     />
                 </MuiThemeProvider>
             </div>
