@@ -1,5 +1,7 @@
 import React, {Component, PropTypes} from 'react';
 import { withGoogleMap, GoogleMap, Marker, Polyline, DirectionsRenderer, Circle } from "react-google-maps";
+import MuiThemeProvider from 'material-ui/styles/MuiThemeProvider';
+import Schedule from './Schedule';
 
 const _TripGoogleMap = withGoogleMap( props => (
     <GoogleMap
@@ -20,23 +22,18 @@ const _TripGoogleMap = withGoogleMap( props => (
             />
         ))
     }
-    {
-        props.polylines.map((polyline, index) => (
-            <Polyline 
-                {...polyline}
-            />
-        ))
-    }
-    {   props.directions?<DirectionsRenderer directions={props.directions} />:null}
     {   props.routes.map(route => (
             <DirectionsRenderer directions={route.directions} />
         ))
     }
-    <Circle 
-        {...props.circle}
-        zIndex={-1}
-        onClick={props.onCircleClick}
-    />
+    {
+        props.start ? 
+        <Circle 
+            {...props.circle}
+            zIndex={-1}
+            onClick={props.onCircleClick}
+        /> : null
+    }
   </GoogleMap>
 ));
 
@@ -45,30 +42,8 @@ export default class TripGoogleMap extends Component{
         super(props);
 
         this.state = {
-            markers: [{
-                position: {
-                    lat: 25.0112183,
-                    lng: 121.52067570000001,
-                },
-                key: `Taiwan`
-            },
-            {
-                position: {
-                    lat: 25.0112183,
-                    lng: 120.52067570000001,
-                },
-                key: `test`
-            }],
-            polylines: [{
-                path: [
-                    {lat: 25.0112183, lng: 121.52067570000001},
-                    {lat: 25.0112183, lng: 121.53067570000001}
-                ],
-                strokeColor: '#FF0000',
-                strokeOpacity: 1.0,
-                strokeWeight: 2,
-                key: `poly`
-            }],
+            start: false,
+            markers: [],
             circle: {
                 center: this.props.center,
                 radius: this.props.radius
@@ -100,22 +75,32 @@ export default class TripGoogleMap extends Component{
 
     render(){
         return (
-            <_TripGoogleMap
-                containerElement={
-                    <div style={{ height: `100%` }}/>
-                }
-                mapElement={
-                    <div style={{ height: `100%` }}/>
-                }
-                markers={this.state.markers}
-                polylines={this.state.polylines}
-                directions={this.state.defDirections}
-                circle={this.state.circle}
-                routes={this.state.routes}
-                onMapClick={this.onMapClick.bind(this)}
-                onCircleClick={this.onMapClick.bind(this)}
-                onMarkerClick={this.onMarkerClick.bind(this)}
-            />
+            <div>
+                <_TripGoogleMap
+                    containerElement={
+                        <div style={{ height: `100%` }}/>
+                    }
+                    mapElement={
+                        <div style={{ height: `100%` }}/>
+                    }
+                    start={this.state.start}
+                    markers={this.state.markers}
+                    polylines={this.state.polylines}
+                    directions={this.state.defDirections}
+                    circle={this.state.circle}
+                    routes={this.state.routes}
+                    onMapClick={this.onMapClick.bind(this)}
+                    onCircleClick={this.onMapClick.bind(this)}
+                    onMarkerClick={this.onMarkerClick.bind(this)}
+                />
+                <MuiThemeProvider>
+                    <Schedule 
+                        spots={this.state.markers}
+                        onUpdate={this.sliderUpdate.bind(this)}
+                        onDragStop={this.sliderDragStop.bind(this)}
+                    />
+                </MuiThemeProvider>
+            </div>
         );
     }
     
@@ -138,6 +123,8 @@ export default class TripGoogleMap extends Component{
     }
 
     async onMapClick(e){
+        if(!this.state.start)
+            this.setState({start: true});
         console.log(e.latLng.lat());
         console.log(e.latLng.lng());
         
@@ -152,6 +139,7 @@ export default class TripGoogleMap extends Component{
         this.setState({circle: position});
         this.props.onMapClick(e);
         
+        console.log('getting markers');   
         let result = await this.getSpot(position);
         console.log('after getspot', result);    
         
@@ -162,7 +150,8 @@ export default class TripGoogleMap extends Component{
                     lat: r.spot.lat,
                     lng: r.spot.lng
                 },
-                key: r.spot.name
+                key: r.spot.id,
+                name: r.spot.name
             });
         }
 
@@ -195,6 +184,38 @@ export default class TripGoogleMap extends Component{
                 console.error(`error fetching directions ${result}`);
             }
         });
+    }
+
+    sliderUpdate(val){
+        this.setState({
+            circle: {
+                center: this.state.circle.center,
+                radius: val * 100
+            }
+        });
+    }
+
+    async sliderDragStop(val){
+        let position = {
+            center: this.state.circle.center,
+            radius: val * 100
+        };
+        console.log('getting markers');   
+        let result = await this.getSpot(position);
+        console.log('after getspot', result);    
+        
+        let markers = [];
+        for(let r of result){
+            markers.push({
+                position: {
+                    lat: r.spot.lat,
+                    lng: r.spot.lng
+                },
+                key: r.spot.name
+            });
+        }
+
+        this.setState({markers});
     }
 
 }

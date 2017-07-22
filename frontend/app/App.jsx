@@ -1,8 +1,6 @@
 import React, {Component, PropTypes} from 'react';
 import { Route, Link } from 'react-router-dom';
-import MuiThemeProvider from 'material-ui/styles/MuiThemeProvider';
 import TripGoogleMap from './components/Maps';
-import Schedule from './components/Schedule';
 
 export default class App extends Component{
     constructor(props){
@@ -13,7 +11,7 @@ export default class App extends Component{
         };
 
         this.state = {
-            radius: 50 * 100
+            radius: 25 * 100
         };
         
         this.circle = {
@@ -23,9 +21,6 @@ export default class App extends Component{
 
     }
 
-    sliderUpdate(val){
-        this.setState({radius: val * 100});
-    }
 
     onCircleClick(e){
         console.log('circle clicked: ',e);
@@ -59,9 +54,6 @@ export default class App extends Component{
                         />}
                     />
                 </div>
-                <MuiThemeProvider>
-                    <Schedule onUpdate={this.sliderUpdate.bind(this)}/>
-                </MuiThemeProvider>
             </div>
         );
     }

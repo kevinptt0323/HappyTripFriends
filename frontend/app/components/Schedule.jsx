@@ -2,6 +2,7 @@ import React, {Component, PropTypes} from 'react';
 import { Step, Stepper, StepLabel } from 'material-ui/Stepper';
 import Slider from 'material-ui/Slider';
 
+import Spots from './Spots';
 
 export default class Schedule extends Component{
     constructor(props){
@@ -9,21 +10,22 @@ export default class Schedule extends Component{
 
         this.state = {
             step: 0,
-            slider: 50
+            slider: 25
         };
     }
 
     onChangeHandler(e, val){
         this.setState({slider: val});
+        this.props.onUpdate(this.state.slider);
     }
 
     onDragStopHandler(e){
-        this.props.onUpdate(this.state.slider);
+        this.props.onDragStop(this.state.slider);
     }
 
     render(){
         return(
-            <div style={{height: '50%'}}>
+            <div style={{height: '100%'}}>
                 <Stepper activeStep={this.state.step}>
                     <Step>
                         <StepLabel>Select start position</StepLabel>
@@ -47,12 +49,11 @@ export default class Schedule extends Component{
                     min={0}
                     max={50}
                     step={0.5}
-                    defaultValue={50}
+                    defaultValue={25}
                     onChange={this.onChangeHandler.bind(this)}
                     onDragStop={this.onDragStopHandler.bind(this)}
                 />
-                <div className="branch">Home</div>
-                <div className="branch">Station</div>
+                <Spots spots={this.props.spots} />
             </div>
         );
     }
