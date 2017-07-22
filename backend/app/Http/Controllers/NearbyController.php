@@ -23,6 +23,12 @@ class NearbyController extends Controller {
             $radius = 500;
         }
 
+        if ($request->has('limit')) {
+            $limit = $request->input('limit');
+        } else {
+            $limit = 500;
+        }
+
         $spots = Spot::nearby($lat, $lng, $radius);
         if ($request->has('type')) {
             $type = $request->input('type');
@@ -30,6 +36,8 @@ class NearbyController extends Controller {
                 return $spot['spot']['type'] == $type;
             })->values();
         }
+
+        $spots = $spots->slice(0, $limit);
 
         return Response::json($spots, 200);
     }

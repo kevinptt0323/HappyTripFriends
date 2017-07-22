@@ -49,6 +49,8 @@ class Spot extends Model
 
     public static $landmark_api = "http://egis.moea.gov.tw/MoeaEGFxData_WebAPI_Inside/InnoServe/LandMark";
 
+    public static $store_api = "http://egis.moea.gov.tw/MoeaEGFxData_WebAPI_Inside/InnoServe/BusinessBUSM";
+
     public static function boot() {
         parent::boot();
 
@@ -60,13 +62,47 @@ class Spot extends Model
         });
     }
 
-    public static function nearby($lat, $lng, $radius) {
-        $lat_sin = sin(deg2rad($lat));
-        $lat_cos = cos(deg2rad($lat));
-        $dist = $radius / (60 * 1.1515 * 1.609344 * 1000);
-        $spots = Spot::whereRaw('DEGREES(ACOS(SIN(RADIANS(lat)) * ? + COS(RADIANS(lat)) * ? * COS(RADIANS(lng - ?)))) <= ?', [$lat_sin, $lat_cos, $lng, $dist])->get();
-        $spots = collect($spots);
+    public static function detectType($spot) {
+        if (preg_match('/(國小)|(國中)|(高中)|(大學)/', $spot->name)) {
+            return "學校";
+        }
+        return null;
+    }
 
+    public static function loadStoreFromAPI($lat, $lng, $radius) {
+        $pointDst = WGS84toTWD97($lng, $lat);
+        $client = new Client();
+        $ret = json_decode($client->request('GET', self::$store_api, [
+            'query' => [
+                'resptype' => 'GeoJson',
+                'x' => $pointDst->x,
+                'y' => $pointDst->y,
+                'buffer' => max(100, min(1000, $radius))
+            ]
+        ])->getBody());
+
+        $spots = collect($ret->features)->filter(function($feature) {
+            return Spot::where('name', $feature->properties->BussName)->count() == 0;
+        })->map(function($feature) {
+            $pointDst = TWD97toWGS84($feature->geometry->coordinates[0], $feature->geometry->coordinates[1]);
+            $spot = new Spot;
+            $spot->name = $feature->properties->BussName;
+            $spot->address = $feature->properties->Addr;
+            $spot->lat = round($pointDst->y, 6);
+            $spot->lng = round($pointDst->x, 6);
+            $spot->type = self::detectType($spot) ??
+                    (!empty($feature->properties->MiddleIndustry) ? mb_substr($feature->properties->MiddleIndustry, 0, 32) :  "商店");
+            return $spot;
+        });
+
+        foreach($spots as &$spot) {
+            $spot->save();
+        }
+
+        return $spots;
+    }
+
+    public static function loadLandmarkFromAPI($lat, $lng, $radius) {
         $pointDst = WGS84toTWD97($lng, $lat);
         $client = new Client();
         $ret = json_decode($client->request('GET', self::$landmark_api, [
@@ -78,20 +114,37 @@ class Spot extends Model
             ]
         ])->getBody());
 
-        $spots2 = array_map(function($feature) {
+        $spots = collect($ret->features)->filter(function($feature) {
+            return Spot::where('name', $feature->properties->LandMark)->count() == 0;
+        })->map(function($feature) {
             $pointDst = TWD97toWGS84($feature->geometry->coordinates[0], $feature->geometry->coordinates[1]);
             $spot = new Spot;
-            $spot->id = "(null)";
             $spot->name = $feature->properties->LandMark;
-            $spot->type = "(經濟部)";
             $spot->lat = round($pointDst->y, 6);
             $spot->lng = round($pointDst->x, 6);
+            $spot->type = self::detectType($spot) ?? "景點";
             return $spot;
-        }, $ret->features);
+        });
 
-        $spots2 = collect($spots2);
+        foreach($spots as &$spot) {
+            $spot->save();
+        }
 
-        $spots = $spots->merge($spots2);
+        return $spots;
+    }
+
+    public static function nearby($lat, $lng, $radius) {
+        $lat_sin = sin(deg2rad($lat));
+        $lat_cos = cos(deg2rad($lat));
+        $dist = $radius / (60 * 1.1515 * 1.609344 * 1000);
+        $spots = self::whereRaw('DEGREES(ACOS(SIN(RADIANS(lat)) * ? + COS(RADIANS(lat)) * ? * COS(RADIANS(lng - ?)))) <= ?', [$lat_sin, $lat_cos, $lng, $dist])->get();
+        $spots = collect($spots);
+
+        $spots = $spots->merge(self::loadLandmarkFromAPI($lat, $lng, $radius));
+        $stores = self::loadStoreFromAPI($lat, $lng, $radius);
+        if ($stores->count())
+            $stores = $stores->random(min($stores->count(), ceil($spots->count()*0.5)));
+        $spots = $spots->merge($stores);
 
         $spots = $spots->map(function($spot) use ($lat, $lng) {
             return ['spot' => $spot, 'distance' => distance($lat, $lng, $spot->lat, $spot->lng)];
